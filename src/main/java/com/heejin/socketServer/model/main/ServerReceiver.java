@@ -47,35 +47,7 @@ public class ServerReceiver extends Thread{
                 String msg = ois.readObject().toString(); //클라이언트로 부터 오는 메세지 수신 담당, 항상 메세지를 받은 이후부터 모든 서버업무가 수행이 가능함
 				logger.info("{} - 메세지를 수신했습니다.", msg);
 
-				String[] loginResult = msg.split(" ");
-
-				switch (loginResult[0]){ //첫번째 코드로 메세지 실행 내용 분류
-					case Protocol.checkLogin:
-
-						String id = loginResult[1];
-						String pw = loginResult[2];
-
-
-						getUserList();
-
-						boolean result = validateUser(id, pw);
-						if(result == true) {
-							oos.writeObject("로그인 성공");
-						} else {
-							oos.writeObject("로그인 실패");
-						}
-						
-						break;
-					case Protocol.createRoomView:
-
-
-						break;
-					default:
-
-						oos.writeObject("테스트 완료");
-						break;
-				}
-
+				oos.writeObject("테스트 완료");
 
 			}
         } catch (Exception e) {

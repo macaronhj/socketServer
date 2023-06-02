@@ -45,6 +45,7 @@ public class ChattingServer extends Thread {
                 onlineList.add(receiver);
                 logger.info("현재 연결된 클라이언트 : "+onlineList.size());
             } catch (Exception e) {
+                isStop = true;
                 e.printStackTrace();
             }
         }

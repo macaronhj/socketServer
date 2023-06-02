@@ -30,4 +30,9 @@
         <pw>xyz123</pw>
         <name>김영숙</name>
     </user>
+    <user>
+        <id>hj249</id>
+        <pw>1234</pw>
+        <name>허희진</name>
+    </user>
 </userList>

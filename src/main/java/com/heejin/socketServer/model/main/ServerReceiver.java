@@ -33,7 +33,7 @@ public class ServerReceiver extends Thread{
     private BufferedReader reader;
 
     private static final Logger logger = LogManager.getLogger(ServerReceiver.class);
-    
+
     public ServerReceiver(Socket socket){
         this.socket = socket;
         try{
@@ -43,7 +43,7 @@ public class ServerReceiver extends Thread{
             e.printStackTrace();
         }
     }
-    
+
 
     @Override
     public void run() {
@@ -61,38 +61,16 @@ public class ServerReceiver extends Thread{
 				Map<String, String> map = (Map<String, String>) ois.readObject();
 				String id = map.get("id");
 				String pwd = map.get("pwd");
-				
-				try {
-		            File file = new File("D:/00.heejin/socketServer/src/main/resources/user-info.xml");
-		            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		            DocumentBuilder db = dbf.newDocumentBuilder();
-		            Document document = db.parse(file);
-		            document.getDocumentElement().normalize();
-		            logger.info("Root Element :{}", document.getDocumentElement().getNodeName());
-		            NodeList nList = document.getElementsByTagName("user");
-		            logger.info("----------------------------");
-		            for (int temp = 0; temp < nList.getLength(); temp++) {
-		                Node nNode = nList.item(temp);
-		                logger.info("Current Element :{}", nNode.getNodeName());
-		                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-		                    Element eElement = (Element) nNode;
-		                    if(eElement.getElementsByTagName("id").item(0).getTextContent().equalsIgnoreCase(id)) {
-		                    	if(eElement.getElementsByTagName("pw").item(0).getTextContent().equalsIgnoreCase(pwd)) {
-		                    		oos.writeObject("로그인 성공");
-		                    		break;
-		                    	}
-		                    }else {
-		                    	oos.writeObject("로그인 실패");
-		                    	break;
-		                    }
-		                }
-		            }
-		        }
-		        catch(IOException e) {
-		            logger.info("e: {}", e);
-		        }
-				
-				oos.writeObject("테스트 완료");
+
+				int userCheck = userCheck(id, pwd);
+
+				if(userCheck == 1) {
+					oos.writeObject("로그인 성공");
+				}else {
+					oos.writeObject("로그인 실패");
+				}
+
+				oos.writeObject(id);
 
 			}
         } catch (Exception e) {
@@ -101,13 +79,48 @@ public class ServerReceiver extends Thread{
 
         }
     }
-    
+
+    public int userCheck(String id, String pwd) {
+    	int userCheck = 0;
+
+    	try {
+            File file = new File("C:/Users/ISPARK/git/socketServer/src/main/resources/user-info.xml");
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(file);
+            document.getDocumentElement().normalize();
+            logger.info("Root Element :{}", document.getDocumentElement().getNodeName());
+            NodeList nList = document.getElementsByTagName("user");
+            logger.info("----------------------------");
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+                Node nNode = nList.item(temp);
+                logger.info("Current Element :{}", nNode.getNodeName());
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eElement = (Element) nNode;
+                    if(eElement.getElementsByTagName("id").item(0).getTextContent().equalsIgnoreCase(id)) {
+                    	if(eElement.getElementsByTagName("pw").item(0).getTextContent().equalsIgnoreCase(pwd)) {
+                    		userCheck = 1;
+                    		break;
+                    	}
+                    }else {
+                    	userCheck = 0;
+                    }
+                }
+            }
+        }
+        catch(Exception e) {
+            logger.info("e: {}", e);
+        }
+
+    	return userCheck;
+    }
+
 	public boolean validateUser(String id, String pw){
 		List<Map<String, String>> userList = getUserList();
-		
+
 		for(Iterator<Map<String, String>> iter = userList.iterator(); iter.hasNext();) {
 			Map<String, String> element = iter.next();
-			
+
 			if(element.get(id).contains(id)) {
 				if(element.get(pw).contains(pw)) {
 					return true;

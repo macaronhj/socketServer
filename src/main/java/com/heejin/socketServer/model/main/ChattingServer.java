@@ -1,20 +1,20 @@
 package com.heejin.socketServer.model.main;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ChattingServer extends Thread {
-	
+
 	private static final Logger logger = LogManager.getLogger(ChattingServer.class);
 
     private List<ServerReceiver> onlineList = new ArrayList<>();
+    private List<String> onlineUserList = new ArrayList<>();
     private ServerSocket serverSocket;
 
     public ChattingServer(int port) {
@@ -39,15 +39,26 @@ public class ChattingServer extends Thread {
                 Socket socket = serverSocket.accept();
                 logger.info(socket.getInetAddress().getHostName() + "해당 소켓이 연결됐습니다.");
 
-                ServerReceiver receiver = new ServerReceiver(socket);
+                ServerReceiver receiver = new ServerReceiver(socket, onlineList);
+
+                //로그인한 유저 목록 뽑기
+                String onlineUser = receiver.onlineUserId();
+                onlineUserList.add(onlineUser);
+                logger.info("onlineUser: {}",getOnlineUserList());
+
                 receiver.start();
 
                 onlineList.add(receiver);
                 logger.info("현재 연결된 클라이언트 : "+onlineList.size());
+
             } catch (Exception e) {
                 isStop = true;
                 e.printStackTrace();
             }
         }
+    }
+
+    public List<String> getOnlineUserList(){
+    	return onlineUserList;
     }
 }

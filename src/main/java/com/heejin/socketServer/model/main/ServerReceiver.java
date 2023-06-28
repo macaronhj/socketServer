@@ -1,13 +1,12 @@
 package com.heejin.socketServer.model.main;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +28,14 @@ public class ServerReceiver extends Thread{
 
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
-    private BufferedWriter writer;
-    private BufferedReader reader;
+
+	private List<ServerReceiver> onlineList = new ArrayList<ServerReceiver>();
 
     private static final Logger logger = LogManager.getLogger(ServerReceiver.class);
 
-    public ServerReceiver(Socket socket){
+    public ServerReceiver(Socket socket, List<ServerReceiver> onlineList){
         this.socket = socket;
+        this.onlineList = onlineList;
         try{
             ois = new ObjectInputStream(socket.getInputStream());
             oos = new ObjectOutputStream(socket.getOutputStream());
@@ -44,11 +44,15 @@ public class ServerReceiver extends Thread{
         }
     }
 
+    //로그인한 사람의 id값
+    public String onlineUserId() throws ClassNotFoundException, IOException {
+		return getOnlineUserId();
+    }
 
     @Override
     public void run() {
-
         boolean isStop = false;
+
         if (ois == null) { //무한루프 방지
             isStop = true;
         }
@@ -56,22 +60,23 @@ public class ServerReceiver extends Thread{
         try {
             run_start://while문같은 반복문 전체를 빠져 나가도록 처리할 때
             while (!isStop) {
-
-//                String msg = ois.readObject().toString(); //클라이언트로 부터 오는 메세지 수신 담당, 항상 메세지를 받은 이후부터 모든 서버업무가 수행이 가능함
-				Map<String, String> map = (Map<String, String>) ois.readObject();
-				String id = map.get("id");
-				String pwd = map.get("pwd");
+            	logger.info("enter");
+				String id = getOnlineUserId();
+				String pwd = getOnlineUserPwd();
+				logger.info("id: {}",id);
+				logger.info("pwd: {}",pwd);
 
 				int userCheck = userCheck(id, pwd);
 
 				if(userCheck == 1) {
-					oos.writeObject("로그인 성공");
+					oos.writeObject("Y");
+					oos.writeObject(id);
+					logger.info("----------------------------");
 				}else {
-					oos.writeObject("로그인 실패");
+					oos.writeObject("N");
 				}
 
 				oos.writeObject(id);
-
 			}
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,6 +85,7 @@ public class ServerReceiver extends Thread{
         }
     }
 
+    //유저 확인
     public int userCheck(String id, String pwd) {
     	int userCheck = 0;
 
@@ -91,10 +97,9 @@ public class ServerReceiver extends Thread{
             document.getDocumentElement().normalize();
             logger.info("Root Element :{}", document.getDocumentElement().getNodeName());
             NodeList nList = document.getElementsByTagName("user");
-            logger.info("----------------------------");
+
             for (int temp = 0; temp < nList.getLength(); temp++) {
                 Node nNode = nList.item(temp);
-                logger.info("Current Element :{}", nNode.getNodeName());
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element eElement = (Element) nNode;
                     if(eElement.getElementsByTagName("id").item(0).getTextContent().equalsIgnoreCase(id)) {
@@ -138,5 +143,17 @@ public class ServerReceiver extends Thread{
 
 
 		return list;
+	}
+
+	public Map<String, String> getMap() throws ClassNotFoundException, IOException{
+		return (Map<String, String>) ois.readObject();
+	}
+
+	public String getOnlineUserId() throws ClassNotFoundException, IOException {
+		return getMap().get("id");
+	}
+
+	public String getOnlineUserPwd() throws ClassNotFoundException, IOException {
+		return getMap().get("pwd");
 	}
 }

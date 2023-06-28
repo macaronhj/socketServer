@@ -29,13 +29,28 @@ public class ServerReceiver extends Thread{
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
 
-	private List<ServerReceiver> onlineList = new ArrayList<ServerReceiver>();
+	private List<ServerReceiver> onlineList;
+    private List<String> onlineUserList;
+
+    private String userId;
 
     private static final Logger logger = LogManager.getLogger(ServerReceiver.class);
 
     public ServerReceiver(Socket socket, List<ServerReceiver> onlineList){
         this.socket = socket;
         this.onlineList = onlineList;
+        try{
+            ois = new ObjectInputStream(socket.getInputStream());
+            oos = new ObjectOutputStream(socket.getOutputStream());
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public ServerReceiver(Socket socket, List<ServerReceiver> onlineList, List<String> onlineUserList){
+        this.socket = socket;
+        this.onlineList = onlineList;
+        this.onlineUserList = onlineUserList;
         try{
             ois = new ObjectInputStream(socket.getInputStream());
             oos = new ObjectOutputStream(socket.getOutputStream());
@@ -69,6 +84,11 @@ public class ServerReceiver extends Thread{
 				int userCheck = userCheck(id, pwd);
 
 				if(userCheck == 1) {
+
+                    //로그인한 유저 목록 뽑기
+                    onlineUserList.add(id);
+                    logger.info("onlineUser: {}", onlineUserList);
+
 					oos.writeObject("Y");
 					oos.writeObject(id);
 					logger.info("----------------------------");
@@ -156,4 +176,12 @@ public class ServerReceiver extends Thread{
 	public String getOnlineUserPwd() throws ClassNotFoundException, IOException {
 		return getMap().get("pwd");
 	}
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 }

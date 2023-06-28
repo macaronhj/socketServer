@@ -39,13 +39,7 @@ public class ChattingServer extends Thread {
                 Socket socket = serverSocket.accept();
                 logger.info(socket.getInetAddress().getHostName() + "해당 소켓이 연결됐습니다.");
 
-                ServerReceiver receiver = new ServerReceiver(socket, onlineList);
-
-                //로그인한 유저 목록 뽑기
-                String onlineUser = receiver.onlineUserId();
-                onlineUserList.add(onlineUser);
-                logger.info("onlineUser: {}",getOnlineUserList());
-
+                ServerReceiver receiver = new ServerReceiver(socket, onlineList, onlineUserList);
                 receiver.start();
 
                 onlineList.add(receiver);

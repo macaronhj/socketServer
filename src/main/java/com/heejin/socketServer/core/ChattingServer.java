@@ -1,4 +1,4 @@
-package com.heejin.socketServer.model.main;
+package com.heejin.socketServer.core;
 
 import java.io.IOException;
 import java.net.ServerSocket;

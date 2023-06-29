@@ -1,4 +1,4 @@
-package com.heejin.socketServer.model.main;
+package com.heejin.socketServer.core;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,9 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.heejin.socketServer.model.Protocol;
+import com.heejin.socketServer.service.UserService;
+import com.heejin.socketServer.service.impl.XmlUserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
@@ -24,7 +26,11 @@ import org.w3c.dom.NodeList;
 
 public class ServerReceiver extends Thread{
 
-    private Socket socket;
+    private static final Logger logger = LogManager.getLogger(ServerReceiver.class);
+
+    private final UserService userService = new XmlUserService();
+
+    private final Socket socket;
 
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
@@ -34,7 +40,6 @@ public class ServerReceiver extends Thread{
 
     private String userId;
 
-    private static final Logger logger = LogManager.getLogger(ServerReceiver.class);
 
     public ServerReceiver(Socket socket, List<ServerReceiver> onlineList){
         this.socket = socket;
@@ -75,13 +80,37 @@ public class ServerReceiver extends Thread{
         try {
             run_start://while문같은 반복문 전체를 빠져 나가도록 처리할 때
             while (!isStop) {
-            	logger.info("enter");
+
+                String msg = ois.readObject().toString();
+                String[] arr = msg.split(Protocol.seperator);
+            	logger.info("수신 메세지 : {}", arr);
+
+                switch (arr[0]){
+                    case Protocol.checkLogin:
+                        String id = arr[1];
+                        String pw = arr[2];
+                        int userCheck = userService.existLogin(id, pw);
+
+                        if(userCheck == 1){ //1일떄 로그인 성공
+                            String reply = Protocol.checkLogin + Protocol.seperator + id + Protocol.seperator + "Y" + Protocol.seperator + "jklee,jsj00023, huhhj";
+                            oos.writeObject(reply);
+                        }
+
+                        break;
+                    case Protocol.showUser:
+
+                        break;
+
+                    default:
+                        logger.info("프로토콜 없는 메세지");
+                }
+
 				String id = getOnlineUserId();
 				String pwd = getOnlineUserPwd();
 				logger.info("id: {}",id);
 				logger.info("pwd: {}",pwd);
 
-				int userCheck = userCheck(id, pwd);
+				int userCheck = userService.existLogin(id, pwd);
 
 				if(userCheck == 1) {
 
@@ -99,6 +128,7 @@ public class ServerReceiver extends Thread{
 				oos.writeObject(id);
 			}
         } catch (Exception e) {
+            logger.error("서버리시버 에러 발생");
             e.printStackTrace();
         }finally {
 

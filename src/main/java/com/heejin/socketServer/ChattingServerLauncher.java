@@ -1,7 +1,7 @@
 package com.heejin.socketServer;
 
 
-import com.heejin.socketServer.model.main.ChattingServer;
+import com.heejin.socketServer.core.ChattingServer;
 
 public class ChattingServerLauncher {
 

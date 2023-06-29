@@ -1,4 +1,4 @@
-package com.heejin.socketServer.model.sample;
+package com.heejin.socketServer.sample;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

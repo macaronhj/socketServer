@@ -1,4 +1,4 @@
-package com.heejin.socketServer.model.sample;
+package com.heejin.socketServer.sample;
 
 import java.io.IOException;
 

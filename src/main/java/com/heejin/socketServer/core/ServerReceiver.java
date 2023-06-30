@@ -13,15 +13,16 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import com.heejin.socketServer.model.Protocol;
-import com.heejin.socketServer.service.UserService;
-import com.heejin.socketServer.service.impl.XmlUserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.heejin.socketServer.model.Protocol;
+import com.heejin.socketServer.service.UserService;
+import com.heejin.socketServer.service.impl.XmlUserService;
 
 
 public class ServerReceiver extends Thread{
@@ -37,8 +38,6 @@ public class ServerReceiver extends Thread{
 
 	private List<ServerReceiver> onlineList;
     private List<String> onlineUserList;
-
-    private String userId;
 
 
     public ServerReceiver(Socket socket, List<ServerReceiver> onlineList){
@@ -64,11 +63,6 @@ public class ServerReceiver extends Thread{
         }
     }
 
-    //로그인한 사람의 id값
-    public String onlineUserId() throws ClassNotFoundException, IOException {
-		return getOnlineUserId();
-    }
-
     @Override
     public void run() {
         boolean isStop = false;
@@ -91,8 +85,11 @@ public class ServerReceiver extends Thread{
                         String pw = arr[2];
                         int userCheck = userService.existLogin(id, pw);
 
+                        String onlineUser = getOnlineUser(id);
+
                         if(userCheck == 1){ //1일떄 로그인 성공
-                            String reply = Protocol.checkLogin + Protocol.seperator + id + Protocol.seperator + "Y" + Protocol.seperator + "jklee,jsj00023, huhhj";
+                            String reply = Protocol.checkLogin + Protocol.seperator + id + Protocol.seperator + "Y" + Protocol.seperator + onlineUser;
+                            logger.info("reply: {}",reply);
                             oos.writeObject(reply);
                         }
 
@@ -105,27 +102,6 @@ public class ServerReceiver extends Thread{
                         logger.info("프로토콜 없는 메세지");
                 }
 
-				String id = getOnlineUserId();
-				String pwd = getOnlineUserPwd();
-				logger.info("id: {}",id);
-				logger.info("pwd: {}",pwd);
-
-				int userCheck = userService.existLogin(id, pwd);
-
-				if(userCheck == 1) {
-
-                    //로그인한 유저 목록 뽑기
-                    onlineUserList.add(id);
-                    logger.info("onlineUser: {}", onlineUserList);
-
-					oos.writeObject("Y");
-					oos.writeObject(id);
-					logger.info("----------------------------");
-				}else {
-					oos.writeObject("N");
-				}
-
-				oos.writeObject(id);
 			}
         } catch (Exception e) {
             logger.error("서버리시버 에러 발생");
@@ -195,23 +171,19 @@ public class ServerReceiver extends Thread{
 		return list;
 	}
 
-	public Map<String, String> getMap() throws ClassNotFoundException, IOException{
-		return (Map<String, String>) ois.readObject();
+	//로그인한 유저 목록 뽑기
+	public String getOnlineUser(String id){
+        onlineUserList.add(id);
+        String onlineUser = "";
+        if( onlineUserList.size() > 1 ) {
+        	for (String item : onlineUserList) {
+        		onlineUser += item + ",";
+        	}
+        	onlineUser = onlineUser.substring(0, onlineUser.length()-1);
+        }else if( onlineUserList.size() == 1 ) {
+        	onlineUser = onlineUserList.get(0);
+        }
+        return onlineUser;
 	}
 
-	public String getOnlineUserId() throws ClassNotFoundException, IOException {
-		return getMap().get("id");
-	}
-
-	public String getOnlineUserPwd() throws ClassNotFoundException, IOException {
-		return getMap().get("pwd");
-	}
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
 }
